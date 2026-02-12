@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<!--
+  Ultra Pro Local Video Player
+  Developer: Vishal Kumar Basson
+  License: GNU General Public License v3.0
+  Open Source Project
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultra Pro Local Video Player</title>
+  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+  <meta name="theme-color" content="#0f172a" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg,#0f172a,#1e293b,#111827);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      padding: 25px;
+      font-size: 28px;
+      font-weight: bold;
+      background: linear-gradient(90deg,#38bdf8,#818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .upload-area {
+      border: 2px dashed #38bdf8;
+      padding: 50px;
+      margin: 20px;
+      text-align: center;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.4s;
+      width: 90%;
+      max-width: 900px;
+      backdrop-filter: blur(20px);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .upload-area:hover {
+      background: rgba(56,189,248,0.15);
+      transform: scale(1.03);
+    }
+
+    .player-container {
+      width: 95%;
+      max-width: 1100px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0,0,0,0.7);
+      margin-top: 20px;
+    }
+
+    .controls-extra {
+      margin: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button, input {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 14px;
+    }
+
+    button {
+      background: linear-gradient(90deg,#38bdf8,#818cf8);
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .info-section {
+      width: 90%;
+      max-width: 1000px;
+      background: rgba(255,255,255,0.05);
+      margin: 30px;
+      padding: 25px;
+      border-radius: 15px;
+      line-height: 1.7;
+    }
+
+    .info-section h2 {
+      margin-bottom: 15px;
+      color: #38bdf8;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+<header>🎬 Ultra Pro Local Video Player</header>
+
+<div class="upload-area" id="dropZone">
+  Drag & Drop Video Here or Click to Upload
+  <input type="file" id="videoInput" accept="video/*" hidden />
+</div>
+
+<div class="player-container">
+  <video id="myVideo" class="video-js vjs-default-skin" controls preload="auto"></video>
+</div>
+
+<div class="controls-extra">
+  <button onclick="changeSpeed(0.5)">0.5x</button>
+  <button onclick="changeSpeed(1)">1x</button>
+  <button onclick="changeSpeed(1.5)">1.5x</button>
+  <button onclick="changeSpeed(2)">2x</button>
+  <button onclick="skip(-10)">⏪ 10s</button>
+  <button onclick="skip(10)">10s ⏩</button>
+  <button onclick="togglePiP()">📺 PiP</button>
+  <button onclick="takeScreenshot()">📸 Screenshot</button>
+  <input type="file" id="subtitleInput" accept=".vtt,.srt" />
+</div>
+
+<div class="info-section">
+  <h2>📘 How To Use</h2>
+  <p>1. Click or drag & drop your video file into the upload area.</p>
+  <p>2. Use playback controls or keyboard shortcuts (Space = Play/Pause, ← → = Seek).</p>
+  <p>3. Upload subtitle file (.srt or .vtt) using subtitle button.</p>
+  <p>4. Use speed buttons to adjust playback speed.</p>
+  <p>5. Screenshot button captures current frame.</p>
+  <p>6. No data is uploaded. Everything runs locally in your browser.</p>
+</div>
+
+<footer>
+  Developed by Vishal Kumar Basson | Open Source under GNU GPL v3.0 License
+</footer>
+
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<script>
+  const videoElement=document.getElementById("myVideo");
+  const videoInput=document.getElementById("videoInput");
+  const dropZone=document.getElementById("dropZone");
+  const subtitleInput=document.getElementById("subtitleInput");
+  const player=videojs(videoElement);
+
+  dropZone.addEventListener("click",()=>videoInput.click());
+  dropZone.addEventListener("dragover",e=>{e.preventDefault();dropZone.style.background="rgba(56,189,248,0.25)";});
+  dropZone.addEventListener("dragleave",()=>dropZone.style.background="rgba(255,255,255,0.05)" );
+  dropZone.addEventListener("drop",e=>{e.preventDefault();loadVideo(e.dataTransfer.files[0]);});
+  videoInput.addEventListener("change",e=>loadVideo(e.target.files[0]));
+
+  function loadVideo(file){
+    if(!file)return;
+    const url=URL.createObjectURL(file);
+    player.src({type:file.type,src:url});
+    player.play();
+  }
+
+  function changeSpeed(speed){player.playbackRate(speed);}  
+  function skip(sec){player.currentTime(player.currentTime()+sec);}  
+  async function togglePiP(){
+    if(document.pictureInPictureElement){await document.exitPictureInPicture();}
+    else{await videoElement.requestPictureInPicture();}
+  }
+
+  function takeScreenshot(){
+    const canvas=document.createElement("canvas");
+    canvas.width=videoElement.videoWidth;
+    canvas.height=videoElement.videoHeight;
+    canvas.getContext("2d").drawImage(videoElement,0,0);
+    const link=document.createElement("a");
+    link.download="screenshot.png";
+    link.href=canvas.toDataURL();
+    link.click();
+  }
+
+  function parseSRT(data){
+    return data.replace(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/g,
+      (match,p1,start,end)=>`${p1}\n${start.replace(',','.') } --> ${end.replace(',','.')}`);
+  }
+
+  subtitleInput.addEventListener("change",function(){
+    const file=this.files[0]; if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      let text=reader.result;
+      if(file.name.endsWith('.srt')) text=parseSRT(text);
+      const blob=new Blob([text],{type:'text/vtt'});
+      const url=URL.createObjectURL(blob);
+      player.addRemoteTextTrack({kind:'subtitles',src:url,srclang:'en',label:'Subtitles',default:true},false);
+    };
+    reader.readAsText(file);
+  });
+
+  document.addEventListener("keydown",e=>{
+    if(e.code==="Space"){e.preventDefault();player.paused()?player.play():player.pause();}
+    if(e.code==="ArrowRight")skip(10);
+    if(e.code==="ArrowLeft")skip(-10);
+  });
+</script>
+
+</body>
+</html>
